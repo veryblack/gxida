@@ -673,7 +673,7 @@ static ssize_t idaapi read_memory(ea_t ea, void *buffer, size_t size)
         dbg_req->mem_data.size = size;
         send_dbg_request(dbg_req, REQ_READ_Z80);
 
-        memcpy(buffer, &dbg_req->mem_data.z80_ram[ea], size);
+        memcpy(buffer, &dbg_req->mem_data.z80_ram[ea & 0x1FFF], size);
         // Z80
     }
     else if (ea < MAXROMSIZE)
