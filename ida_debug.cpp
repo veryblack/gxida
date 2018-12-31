@@ -314,7 +314,6 @@ static int idaapi check_debugger_events(void *ud)
         switch (dbg_event->type)
         {
         case DBG_EVT_STARTED:
-        {
             ev.eid = PROCESS_START;
             ev.pid = 1;
             ev.tid = 1;
@@ -322,16 +321,16 @@ static int idaapi check_debugger_events(void *ud)
             ev.handled = true;
 
             ev.modinfo.name[0] = 'G';
-            ev.modinfo.name[1] = 'E';
-            ev.modinfo.name[2] = 'N';
-            ev.modinfo.name[3] = 'S';
+            ev.modinfo.name[1] = 'P';
+            ev.modinfo.name[2] = 'G';
+            ev.modinfo.name[3] = 'X';
             ev.modinfo.name[4] = '\0';
             ev.modinfo.base = 0;
             ev.modinfo.size = 0;
             ev.modinfo.rebase_to = BADADDR;
 
-            g_events.enqueue(ev, IN_BACK);
-        } break;
+            g_events.enqueue(ev, IN_FRONT);
+            break;
         case DBG_EVT_PAUSED:
             ev.pid = 1;
             ev.tid = 1;
@@ -391,6 +390,7 @@ static int idaapi start_process(const char *path,
     g_events.clear();
 
     dbg_req = open_shared_mem();
+    dbg_req->is_ida = 1;
 
     if (!dbg_req)
     {
@@ -405,6 +405,7 @@ static int idaapi start_process(const char *path,
     }
 
     dbg_req->dbg_active = 1;
+    send_dbg_request(dbg_req, REQ_ATTACH);
 
     events_thread = qthread_create(check_debugger_events, NULL);
 
@@ -443,6 +444,7 @@ static int idaapi emul_exit_process(void)
 {
     stop_debugging();
     finish_execution();
+    dbg_req->is_ida = 0;
     close_shared_mem(&dbg_req);
 
     return 1;
